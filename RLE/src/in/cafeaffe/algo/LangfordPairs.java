@@ -8,31 +8,44 @@ import java.util.List;
 /**
  * Created by gmishra on 20/12/2016.
  */
+
+//Reference : http://dialectrix.com/langford/langford-algorithm.html
 public class LangfordPairs {
 
     public static void main(String[] args) {
         int[] arr = new int[14];
 
+        System.out.println("Finding a solution recursively...");
         initArray(arr);
         Long time1 = System.nanoTime();
         getLangfordPairsRecursive(arr, 7);
         Long time2 = System.nanoTime();
         printArray(arr);
         System.out.println();
+        System.out.println();
 
+        System.out.println("Finding a solution iterating on positions...");
         initArray(arr);
         long time3 = System.nanoTime();
         hasSolutionIterOnPosition(arr, 7);
         long time4 = System.nanoTime();
-        System.out.println();
         printArray(arr);
+        System.out.println();
+        System.out.println();
+
+        System.out.println("Finding a solution iterating on numbers...");
+        initArray(arr);
+        long time5 = System.nanoTime();
+        hasSolutionIterOnNumbers(arr, 7);
+        long time6 = System.nanoTime();
+        printArray(arr);
+        System.out.println();
         System.out.println();
 
         initArray(arr);
         System.out.println("Finding all solutions...");
-        long time5 = System.nanoTime();
         findAllSolutionsIterOnNumbers(arr, 7);
-        long time6 = System.nanoTime();
+
         System.out.println();
         System.out.println("\nTime taken for recursive method : " + String.valueOf(time2 - time1));
         System.out.println("Time taken for iter 1 method : " + String.valueOf(time4 - time3));
@@ -78,6 +91,40 @@ public class LangfordPairs {
         return false;
     }
 
+    private static boolean hasSolutionIterOnNumbers(int[] arr, int num){
+        if(!isSolutionFeasible(num)){
+            return false;
+        }
+
+        Deque<Integer> lastPositions = new ArrayDeque<Integer>();
+
+        int number = num;
+        int pos = 0;
+
+        while(number > 0){
+            //Find a position where this number can be placed
+            int position = getNextFitPosition(arr, 0, number);
+
+            while(position == -1){
+                //If this number can be placed at no position.. backtrack
+                if(lastPositions.isEmpty()){
+                    return false;
+                }
+                pos = lastPositions.pop();
+                int prevNum = arr[pos];
+                //reset
+                resetPosition(arr, pos);
+                position = getNextFitPosition(arr, pos + 1, prevNum);
+                if(position != -1){
+                    number = prevNum;
+                }
+            }
+            placeNum(arr, number, position);
+            lastPositions.push(position);
+            number--;
+        }
+        return true;
+    }
 
     private static boolean hasSolutionIterOnPosition(int[] arr, int num){
         if(!isSolutionFeasible(num)){
