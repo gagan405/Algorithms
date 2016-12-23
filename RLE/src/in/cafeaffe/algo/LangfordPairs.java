@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Created by gmishra on 20/12/2016.
@@ -12,52 +11,50 @@ import java.util.Stack;
 public class LangfordPairs {
 
     public static void main(String[] args) {
-        int[] arr = new int[56];
-        for(int i = 0; i < arr.length; i++) {
-            arr[i] = -1;
-        }
-        Long time1 = System.nanoTime();
-        getFilledArray(arr, 28);
-        Long time2 = System.nanoTime();
-        for(int x : arr)
-            System.out.print(x + " ");
+        int[] arr = new int[14];
 
-        int[] arr1 = new int[56];
-        for(int i = 0; i < arr1.length; i++) {
-            arr1[i] = -1;
-        }
+        initArray(arr);
+        Long time1 = System.nanoTime();
+        getLangfordPairsRecursive(arr, 7);
+        Long time2 = System.nanoTime();
+        printArray(arr);
+        System.out.println();
+
+        initArray(arr);
         long time3 = System.nanoTime();
-        hasSolutionIter(arr1, 28);
+        hasSolutionIterOnPosition(arr, 7);
         long time4 = System.nanoTime();
         System.out.println();
-        for(int x : arr1)
-            System.out.print(x + " ");
+        printArray(arr);
+        System.out.println();
 
-        int[] arr2 = new int[56];
-        for(int i = 0; i < arr2.length; i++) {
-            arr2[i] = -1;
-        }
+        initArray(arr);
+        System.out.println("Finding all solutions...");
         long time5 = System.nanoTime();
-        hasSolutionIter1(arr2, 28);
+        findAllSolutionsIterOnNumbers(arr, 7);
         long time6 = System.nanoTime();
         System.out.println();
-        for(int x : arr2)
-            System.out.print(x + " ");
-
         System.out.println("\nTime taken for recursive method : " + String.valueOf(time2 - time1));
         System.out.println("Time taken for iter 1 method : " + String.valueOf(time4 - time3));
         System.out.println("Time taken for iter 2 method : " + String.valueOf(time6 - time5));
     }
-    private static boolean getFilledArray(int[] arr, int n){
+
+    private static void initArray(int[] arr) {
+        for(int i = 0; i < arr.length; i++) {
+            arr[i] = -1;
+        }
+    }
+
+    private static boolean getLangfordPairsRecursive(int[] arr, int n){
         int nextInt = n;
-        return isSolutionFeasible(n) ? hasSolution(arr, nextInt) : false;
+        return isSolutionFeasible(n) ? hasSolutionRecursive(arr, nextInt) : false;
     }
 
     private static boolean isSolutionFeasible(int n) {
         return ((n % 4) == 3 || (n % 4) == 0) ? true : false;
     }
 
-    private static boolean hasSolution(int[] arr, int nextInt) {
+    private static boolean hasSolutionRecursive(int[] arr, int nextInt) {
         int nextPos = findPos(arr, 0, nextInt);
         if (nextPos == -1) return false;
 
@@ -69,7 +66,7 @@ public class LangfordPairs {
                 return true;
             }
 
-            if(!hasSolution(arr, nextInt - 1)) {
+            if(!hasSolutionRecursive(arr, nextInt - 1)) {
                 arr[nextPos] = -1;
                 arr[nextPos + nextInt + 1] = -1;
                 nextPos = findPos(arr, nextPos + 1, nextInt);
@@ -82,7 +79,7 @@ public class LangfordPairs {
     }
 
 
-    private static boolean hasSolutionIter(int[] arr, int num){
+    private static boolean hasSolutionIterOnPosition(int[] arr, int num){
         if(!isSolutionFeasible(num)){
             return false;
         }
@@ -116,8 +113,7 @@ public class LangfordPairs {
                 number = getNextFitNumber(nums, arr, nums.length - prevNum + 1, pos);
             }
 
-            arr[pos] = number;
-            arr[pos + number + 1] = number;
+            placeNum(arr, number, pos);
             lastPositions.push(pos);
             pos++;
             nums[nums.length - number] = true;
@@ -128,24 +124,28 @@ public class LangfordPairs {
         return true;
     }
 
-    private static boolean hasSolutionIter1(int[] arr, int num){
+    private static void findAllSolutionsIterOnNumbers(int[] arr, int num){
+        List<Integer[]> solutions = new ArrayList<Integer[]>();
+
         if(!isSolutionFeasible(num)){
-            return false;
+            return;
         }
+        int[] positions = new int[3];
+        int begin = 0;
 
         Deque<Integer> lastPositions = new ArrayDeque<Integer>();
 
         int number = num;
         int pos = 0;
 
-        while(number > 0){
+        while(true){
             //Find a position where this number can be placed
-            int position = getNextFitPosition(arr, 0, number);
+            int position = getNextFitPosition(arr, begin, number);
 
             while(position == -1){
                 //If this number can be placed at no position.. backtrack
                 if(lastPositions.isEmpty()){
-                    return false;
+                    return;
                 }
                 pos = lastPositions.pop();
                 int prevNum = arr[pos];
@@ -155,12 +155,57 @@ public class LangfordPairs {
                 if(position != -1){
                     number = prevNum;
                 }
+                if((prevNum == num) && position == -1){
+                    printSolutions(solutions);
+                    return;
+                }
             }
             placeNum(arr, number, position);
             lastPositions.push(position);
+            if(number <= 3){
+                positions[number-1] = position;
+            }
             number--;
+            begin = 0;
+            if(number == 0) {
+                //Found a solution
+                solutions.add(convertToObjectArray(arr));
+                number = 3;
+                lastPositions.pop();
+                lastPositions.pop();
+                lastPositions.pop();
+                resetPosition(arr, positions[0]);
+                resetPosition(arr, positions[1]);
+                resetPosition(arr, positions[2]);
+                begin = positions[2] + 1;
+            }
         }
-        return true;
+    }
+
+    private static void printSolutions(List<Integer[]> solutions) {
+        System.out.println("Total solutions found : " + solutions.size());
+        for(Integer[] solution : solutions){
+            System.out.println();
+            printArray(solution);
+        }
+    }
+
+    private static Integer[] convertToObjectArray(int[] arr) {
+        Integer[] result = new Integer[arr.length];
+        for(int x = 0; x < arr.length; x++){
+            result[x] = arr[x];
+        }
+        return result;
+    }
+
+    private static void printArray(int[] arr) {
+        for(int x : arr)
+            System.out.print(x + " ");
+    }
+
+    private static void printArray(Integer[] arr) {
+        for(int x : arr)
+            System.out.print(x + " ");
     }
 
     private static void resetPosition(int[] arr, int pos) {
@@ -208,29 +253,6 @@ public class LangfordPairs {
         return -1;
     }
 
-    private static int findNextNum(boolean[] nums) {
-        for(int idx = 0; idx < nums.length; idx++) {
-            if(!nums[idx]){
-                return idx;
-            }
-        }
-        return -1;
-    }
-
-    private static int backtrack(int[] arr, Deque<IntegerPos> stack){
-        if(stack.isEmpty()) return -1;
-
-        IntegerPos prev = stack.pop();
-        int nextNum = prev.getNumber();
-        int nextPos = prev.getPosition();
-
-        //reset
-        arr[nextPos] = -1;
-        arr[nextPos + nextNum + 1] = -1;
-
-        return nextNum;
-    }
-
     private static void placeNum(int[] arr, int num, int idx){
         arr[idx] = num;
         arr[idx + num + 1] = num;
@@ -243,23 +265,5 @@ public class LangfordPairs {
             }
         }
         return -1;
-    }
-
-    public static class IntegerPos {
-        private int number;
-        private int position;
-
-        public IntegerPos(int number, int position){
-            this.number = number;
-            this.position = position;
-        }
-
-        public int getNumber() {
-            return number;
-        }
-
-        public int getPosition() {
-            return position;
-        }
     }
 }
