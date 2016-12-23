@@ -10,7 +10,7 @@ package in.cafeaffe.algo;
 public class RLE {
 	
 	public static void main(String[] args){
-		String s = "AABBBDCCCXCCCYYYYYYYYYYYYYYYYYYYYYYYYYYZ";
+		String s = "AAABB";
 		s = s + "\0";
 		char[] charArr = s.toCharArray();
 		doRle(charArr, true);
